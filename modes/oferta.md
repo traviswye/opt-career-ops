@@ -66,7 +66,9 @@ Top 5 changes to the CV + Top 5 changes to LinkedIn to maximize match.
 
 ## Block F — Interview Plan
 
-6-10 STAR+R stories mapped to JD requirements (STAR + **Reflection**):
+**Gated on score ≥ 4.0.** If the weighted global score is below 4.0, do NOT generate the full interview plan — emit the deferred stub shown in the output schema below. Full plan is only generated for jobs the user is likely to actually apply to.
+
+If score ≥ 4.0: 6-10 STAR+R stories mapped to JD requirements (STAR + **Reflection**):
 
 | # | JD Requirement | STAR+R Story | S | T | A | R | Reflection |
 |---|----------------|--------------|---|---|---|---|------------|
@@ -185,7 +187,15 @@ Save the full evaluation to `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 (full contents of block E)
 
 ## F) Interview Plan
-(full contents of block F)
+(full contents of block F if score ≥ 4.0, otherwise the one-paragraph deferred stub below)
+
+If score < 4.0, emit exactly this instead of the full plan:
+
+```markdown
+## F) Interview Plan
+
+_Deferred — score below apply threshold (4.0). If you decide to pursue this role later, re-run `/career-ops oferta` on this JD to generate the full plan._
+```
 
 ## G) Posting Legitimacy
 (full contents of block G)

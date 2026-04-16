@@ -99,7 +99,18 @@ Where `{company-slug}` is the company name lowercased with hyphens for spaces an
 (top 5 CV changes, top 5 LinkedIn changes)
 
 ## F) Interview Plan
-(6–10 STAR+R stories mapped to JD requirements)
+
+**Gated on score ≥ 4.0.** If your weighted global score in the Score Breakdown is below 4.0, DO NOT emit the full interview plan. Instead, emit exactly:
+
+```markdown
+## F) Interview Plan
+
+_Deferred — score below apply threshold (4.0). If you decide to pursue this role later, re-run `/career-ops oferta` on this JD to generate the full plan._
+```
+
+If score ≥ 4.0, emit the full plan: 6–10 STAR+R stories mapped to JD requirements, one recommended case study, and red-flag Q&A. Use the Block F structure from `modes/oferta.md`.
+
+**Why this gate exists:** sub-threshold jobs skip Phase 2 (PDF) and are flagged as BORDERLINE / SKIP in the tracker. Writing a full interview plan the user will never reference is ~1–2k output tokens per job of pure cost. The stub keeps the report structure intact (so downstream tooling that looks for `## F)` still finds it) while saving the tokens.
 
 ## G) Posting Legitimacy
 (tier + signals table + context notes)
