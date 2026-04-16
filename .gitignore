@@ -1,19 +1,39 @@
 # Personal data (user fills these)
+cv.md
+article-digest.md
 data/applications.md
 data/pipeline.md
 data/scan-history.tsv
+data/candidate-pack.json
+data/prefilter-policy*.json
+data/scan-results.json
+data/scan-filter*/
+data/prefilter/*
+data/prefilter-*/
+data/triage/*
 reports/*.md
+reports/*.json
 !reports/.gitkeep
 output/*
 !output/.gitkeep
 batch/logs/*
 !batch/logs/.gitkeep
+batch/tmp/
 batch/batch-state.tsv
 batch/batch-input.tsv
 batch/tracker-additions/**/*.tsv
+batch/tracker-additions/merged/
 !batch/tracker-additions/.gitkeep
 jds/*
 !jds/.gitkeep
+interview-prep/*
+!interview-prep/.gitkeep
+!interview-prep/story-bank.template.md
+
+# Transient scratch files (per-JD tailoring + extracted JD text)
+tmp/
+tmp-jd-*.txt
+testpdfs/
 
 # User config and customization (never auto-updated)
 config/profile.yml
