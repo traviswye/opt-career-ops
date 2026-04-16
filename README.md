@@ -42,6 +42,8 @@
 
 <p align="center"><a href="https://discord.gg/8pRpHETxa4"><img src="https://img.shields.io/badge/Join_the_community-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a></p>
 
+> **This repo is a fork of [santifer/career-ops](https://github.com/santifer/career-ops).** The original system by [Santiago](https://santifer.io) is a fully-working end-to-end job search agent that he used to evaluate 740+ offers and land his Head of Applied AI role. This fork introduces a staged, cost-optimized discovery pipeline (scan → Haiku triage → Sonnet customize), a deterministic local CV renderer, a shared location-matching library, and a slimmer `_shared` / `_eval` mode split. Both systems produce tailored CVs end-to-end; this fork optimizes for running at higher volume at lower cost per offer.
+
 ## What Is This
 
 Career-Ops turns any AI coding CLI into a full job search command center. Instead of manually tracking applications in a spreadsheet, you get an AI-powered pipeline that:
@@ -64,46 +66,55 @@ Built by someone who used it to evaluate 740+ job offers, generate 100+ tailored
 
 | Feature | Description |
 |---------|-------------|
-| **Auto-Pipeline** | Paste a URL, get a full evaluation + PDF + tracker entry |
-| **6-Block Evaluation** | Role summary, CV match, level strategy, comp research, personalization, interview prep (STAR+R) |
-| **Interview Story Bank** | Accumulates STAR+Reflection stories across evaluations -- 5-10 master stories that answer any behavioral question |
+| **Auto-Pipeline (single-JD)** | Paste a URL or JD, get a full evaluation + tailored PDF + tracker entry |
+| **Staged discovery pipeline** | Zero-token scan → Haiku triage → per-user-approved shortlist → Sonnet 2-phase customize — built to run at thousands-of-offers scale |
+| **7-Block Evaluation (A–G)** | Role summary, CV match, level strategy, comp research, personalization, interview prep (STAR+R), posting legitimacy |
+| **Deterministic CV renderer** | `render-cv.mjs` fills the HTML template from a JSON tailoring schema — LLM never produces HTML, saving ~3k output tokens/run |
+| **Coverage + cliché + page-budget lint** | Every PDF is linted for ATS keyword coverage (≥80% adjusted floor), banned clichés, and page overflow; one auto-retry on failure |
+| **Shared location-matching library** | `lib/location-match.mjs` with tiered evidence (metadata → header zone → phrase), foreign country/city patterns, ambiguous-abbreviation disambiguation, and camelCase ATS-text normalization |
+| **ATS umbrella-term rule** | Automatically pairs specifics (Git, AWS CDK, Docker, Pytest) with the umbrella categories ATS parsers search for (`version control`, `AWS services`, `containerization`, `automated testing`) |
+| **Interview Story Bank** | Accumulates STAR+Reflection stories across evaluations — 5–10 master stories that answer any behavioral question |
 | **Negotiation Scripts** | Salary negotiation frameworks, geographic discount pushback, competing offer leverage |
-| **ATS PDF Generation** | Keyword-injected CVs with Space Grotesk + DM Sans design |
-| **Portal Scanner** | 45+ companies pre-configured (Anthropic, OpenAI, ElevenLabs, Retool, n8n...) + custom queries across Ashby, Greenhouse, Lever, Wellfound |
-| **Batch Processing** | Parallel evaluation with `claude -p` workers |
+| **Portal Scanner** | 45+ companies pre-configured + custom queries across Ashby, Greenhouse, Lever, Wellfound — parallel extraction (~25 min for ~2,400 jobs at `--parallel 4`) |
+| **Batch / Customize** | Parallel 2-phase orchestrator with skip-threshold gate on Phase 2 to skip PDFs for sub-threshold jobs |
 | **Dashboard TUI** | Terminal UI to browse, filter, and sort your pipeline |
-| **Human-in-the-Loop** | AI evaluates and recommends, you decide and act. The system never submits an application -- you always have the final call |
+| **Human-in-the-Loop** | AI evaluates and recommends, you decide and act. The system never submits an application — you always have the final call |
 | **Pipeline Integrity** | Automated merge, dedup, status normalization, health checks |
 
 ## Quick Start
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/santifer/career-ops.git
+git clone https://github.com/traviswye/career-ops.git   # or santifer/career-ops for upstream
 cd career-ops && npm install
-npx playwright install chromium   # Required for PDF generation
+npx playwright install chromium   # required for Playwright extraction + PDF rendering
 
 # 2. Check setup
-npm run doctor                     # Validates all prerequisites
+npm run doctor                     # validates prerequisites and directory layout
 
 # 3. Configure
-cp config/profile.example.yml config/profile.yml  # Edit with your details
-cp templates/portals.example.yml portals.yml       # Customize companies
+cp config/profile.example.yml config/profile.yml     # edit with your details
+cp templates/portals.example.yml portals.yml         # customize portals + title keywords
+cp modes/_profile.template.md modes/_profile.md      # your narrative + customizations
+cp interview-prep/story-bank.template.md interview-prep/story-bank.md
 
 # 4. Add your CV
 # Create cv.md in the project root with your CV in markdown
 
 # 5. Personalize with Claude
-claude   # Open Claude Code in this directory
-
+claude                              # open Claude Code in this directory
 # Then ask Claude to adapt the system to you:
-# "Change the archetypes to backend engineering roles"
-# "Translate the modes to English"
-# "Add these 5 companies to portals.yml"
-# "Update my profile with this CV I'm pasting"
+#   "Change the archetypes to backend engineering roles"
+#   "Add these companies to portals.yml"
+#   "Tune prefilter.location.allow_unknown_location to false"
 
-# 6. Start using
-# Paste a job URL or run /career-ops
+# 6. Two ways to use it
+# A) Single-JD: paste a URL or JD into the chat — auto-pipeline runs end-to-end.
+# B) Discovery at scale:
+#    /career-ops scan       # populate jds/normalized + data/prefilter/kept.json
+#    /career-ops triage     # Haiku lite-scoring
+#    /career-ops shortlist  # review + promote
+#    /career-ops customize  # Sonnet eval + tailored PDFs
 ```
 
 > **The system is designed to be customized by Claude itself.** Modes, archetypes, scoring weights, negotiation scripts -- just ask Claude to change them. It reads the same files it uses, so it knows exactly what to edit.
@@ -112,46 +123,115 @@ See [docs/SETUP.md](docs/SETUP.md) for the full setup guide.
 
 ## Usage
 
-Career-ops is a single slash command with multiple modes:
+Career-ops is a single slash command with multiple modes. Everything below is also available as `npm run <mode>` for headless / CI use.
+
+### Single-JD workflow (paste a URL or JD)
 
 ```
-/career-ops                → Show all available commands
 /career-ops {paste a JD}   → Full auto-pipeline (evaluate + PDF + tracker)
-/career-ops scan           → Scan portals for new offers
-/career-ops pdf            → Generate ATS-optimized CV
-/career-ops batch          → Batch evaluate multiple offers
-/career-ops tracker        → View application status
-/career-ops apply          → Fill application forms with AI
-/career-ops pipeline       → Process pending URLs
-/career-ops contacto       → LinkedIn outreach message
-/career-ops deep           → Deep company research
-/career-ops training       → Evaluate a course/cert
-/career-ops project        → Evaluate a portfolio project
+/career-ops pipeline       → Process pending URLs from inbox (data/pipeline.md)
+/career-ops oferta         → Evaluation only A–G (no auto PDF)
+/career-ops pdf            → PDF only, ATS-optimized CV
 ```
 
-Or just paste a job URL or description directly -- career-ops auto-detects it and runs the full pipeline.
+### Staged discovery pipeline (built for scale)
+
+```
+/career-ops scan           → Portals → filter → extract → prefilter → candidate-pack
+                             All zero-token, idempotent. Ready for triage.
+/career-ops triage         → Haiku lite-scoring (first token spend, ~$0.70 per 1k jobs)
+/career-ops shortlist      → Review triage results and promote selections
+/career-ops customize      → 2-phase Sonnet eval + tailored PDF on the shortlist
+```
+
+### Application and relationship
+
+```
+/career-ops apply          → Live application assistant (reads form + drafts answers)
+/career-ops contacto       → LinkedIn outreach: find contacts + draft message
+/career-ops followup       → Follow-up cadence tracker: flag overdue, draft nudges
+```
+
+### Comparison, research, overview
+
+```
+/career-ops ofertas        → Compare and rank multiple offers
+/career-ops deep           → Deep company research
+/career-ops training       → Evaluate a course/cert against your North Star
+/career-ops project        → Evaluate a portfolio project idea
+/career-ops tracker        → Application status overview
+/career-ops patterns       → Analyze rejection patterns and improve targeting
+/career-ops batch          → Legacy monolithic pipeline (kept under batch/legacy/)
+```
+
+Paste a URL or JD directly — career-ops auto-detects it and runs the full single-JD pipeline.
 
 ## How It Works
 
+### Single-JD flow (auto-pipeline)
+
 ```
-You paste a job URL or description
+You paste a job URL or JD
         │
         ▼
 ┌──────────────────┐
-│  Archetype       │  Classifies: LLMOps / Agentic / PM / SA / FDE / Transformation
-│  Detection       │
+│  Phase 1: Eval   │  Sonnet 4.6 + thinking → Blocks A–G + score + keyword sidecar
+│  (reads cv.md,   │
+│   profile.yml,   │
+│   _eval.md)      │
 └────────┬─────────┘
-         │
+         │ score ≥ pdf-threshold (default 4.0)
 ┌────────▼─────────┐
-│  A-F Evaluation  │  Match, gaps, comp research, STAR stories
-│  (reads cv.md)   │
+│  Phase 2: PDF    │  Sonnet emits JSON tailoring → render-cv.mjs fills template
+│  (deterministic) │  → lint (coverage / cliche / overflow) → auto-retry once
 └────────┬─────────┘
          │
     ┌────┼────┐
     ▼    ▼    ▼
  Report  PDF  Tracker
-  .md   .pdf   .tsv
 ```
+
+### Staged discovery flow (scan → triage → customize)
+
+```
+┌─ scan ──────────────────────────────────────────────────────────── zero token ──┐
+│ 1. build-prefilter-policy      → data/prefilter-policy.json                    │
+│ 2. scan-local                  → data/scan-results.json (ATS APIs)             │
+│ 3. scan-filter                 → data/scan-filter/candidates.json              │
+│ 4. extract-jd --parallel N     → jds/normalized/{id}.json (Playwright + ATS)   │
+│ 5. prefilter-jobs              → data/prefilter/{kept,rejected}.json           │
+│ 6. candidate-pack              → data/candidate-pack.json                      │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                          │
+                              consent boundary (first tokens)
+                                          │
+┌─ triage ─────────────────────────────────────────────── Claude Haiku 4.5 ──────┐
+│ triage-lite --jobs data/prefilter/kept.json                                    │
+│ → data/triage/results.json (buckets: strong_include / include / borderline /    │
+│   exclude) + per-job rationale cache                                           │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                          │
+                              user review  ↓
+┌─ shortlist ─────────────────────────────────────────────────── deterministic ──┐
+│ shortlist / review-shortlist                                                   │
+│ → data/triage/shortlist.json (user-approved set)                               │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                          │
+                              spending gate (Sonnet)
+                                          │
+┌─ customize ─────────────────────────────────────── Claude Sonnet 4.6 + thinking ┐
+│ full-customize --from shortlist.json --approve                                 │
+│   Phase 1 (eval)  → reports/{NNN}-{slug}-{date}.md + keywords.json             │
+│   Phase 2 (pdf)   → output/cv-{you}-{company}-{role}-{date}.pdf (via renderer) │
+│   Tracker TSV     → batch/tracker-additions/                                    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Cost envelope (for a 2,400-offer daily run):**
+- Scan + filter + extract + prefilter + candidate-pack: $0 (all local / deterministic).
+- Triage: ~$2 (Haiku 4.5 at chunk size 12, ~700 kept jobs).
+- Customize (Sonnet Phase 1 on ~30 shortlisted + Phase 2 on ~15 above threshold): ~$3–$5.
+- **Total: under $10/day** to go from 2,400 raw listings to a dozen ATS-ready tailored CVs.
 
 ## Pre-configured Portals
 
@@ -185,32 +265,63 @@ Features: 6 filter tabs, 4 sort modes, grouped/flat view, lazy-loaded previews, 
 ```
 career-ops/
 ├── CLAUDE.md                    # Agent instructions
-├── cv.md                        # Your CV (create this)
-├── article-digest.md            # Your proof points (optional)
+├── cv.md                        # Your CV (create this — gitignored)
+├── article-digest.md            # Your proof points (optional — gitignored)
 ├── config/
 │   └── profile.example.yml      # Template for your profile
-├── modes/                       # 14 skill modes
-│   ├── _shared.md               # Shared context (customize this)
-│   ├── oferta.md                # Single evaluation
-│   ├── pdf.md                   # PDF generation
-│   ├── scan.md                  # Portal scanner
-│   ├── batch.md                 # Batch processing
-│   └── ...
+├── lib/
+│   └── location-match.mjs       # Shared location-matching library
+├── modes/                       # Skill modes (entry points for /career-ops)
+│   ├── _shared.md               # Universal rules (all modes)
+│   ├── _eval.md                 # Evaluation-only rules (scoring, legitimacy)
+│   ├── _profile.template.md     # User customization scaffold
+│   ├── auto-pipeline.md         # Single-JD auto flow (Phase 1 + Phase 2)
+│   ├── oferta.md                # Single evaluation (Blocks A–G)
+│   ├── pdf.md                   # Tailored CV — JSON output to renderer
+│   ├── scan.md                  # Discovery pipeline orchestrator
+│   ├── triage.md                # Haiku lite-scoring
+│   ├── shortlist.md             # Triage promotion UI
+│   ├── customize.md             # 2-phase eval + PDF orchestrator
+│   ├── pipeline.md              # Inbox URL processor
+│   ├── batch.md                 # Legacy monolithic pipeline
+│   └── ... (contacto, deep, training, project, tracker, apply, patterns, followup)
 ├── templates/
 │   ├── cv-template.html         # ATS-optimized CV template
 │   ├── portals.example.yml      # Scanner config template
 │   └── states.yml               # Canonical statuses
 ├── batch/
-│   ├── batch-prompt.md          # Self-contained worker prompt
-│   └── batch-runner.sh          # Orchestrator script
+│   ├── eval-prompt.md           # Phase 1 system prompt (customize)
+│   ├── triage-prompt.md         # Haiku triage system prompt
+│   └── legacy/                  # Archived pre-split monolithic pipeline
 ├── dashboard/                   # Go TUI pipeline viewer
-├── data/                        # Your tracking data (gitignored)
+├── data/                        # Your tracking + pipeline outputs (gitignored)
 ├── reports/                     # Evaluation reports (gitignored)
 ├── output/                      # Generated PDFs (gitignored)
+├── interview-prep/              # Accumulated STAR+R story bank (gitignored)
+├── jds/normalized/              # Extracted JD artifacts (gitignored)
 ├── fonts/                       # Space Grotesk + DM Sans
-├── docs/                        # Setup, customization, architecture
+├── docs/                        # Setup, architecture, scan/staged pipelines
 └── examples/                    # Sample CV, report, proof points
 ```
+
+### Key scripts (run via `npm run <name>` or the corresponding `/career-ops <mode>`)
+
+| Script | Stage | What it does |
+|---|---|---|
+| `run-pipeline.mjs` | scan | Orchestrator chaining build-prefilter-policy → scan-local → scan-filter → extract-jd → prefilter-jobs → candidate-pack |
+| `scan-local.mjs` | scan | ATS API scrape (Greenhouse, Ashby, Lever) |
+| `scan-filter.mjs` | scan | Title + metadata-level location filter |
+| `extract-jd.mjs` | scan | Parallel Playwright + ATS-API body extraction |
+| `build-prefilter-policy.mjs` | scan | Derives deterministic filter rules from profile.yml |
+| `prefilter-jobs.mjs` | scan | Strict prefilter: tiered location evidence + modality policy |
+| `candidate-pack.mjs` | scan | Compact JSON pack for triage and customize |
+| `triage-lite.mjs` | triage | Haiku lite-scoring with parallel workers |
+| `shortlist.mjs` | shortlist | Promote triage results into a per-user-approved shortlist |
+| `review-shortlist.mjs` | shortlist | Interactive per-job review walk |
+| `full-customize.mjs` | customize | 2-phase orchestrator: Sonnet eval + deterministic PDF render |
+| `render-cv.mjs` | customize | Deterministic JSON → HTML → PDF renderer with coverage + cliché + budget lint |
+| `merge-tracker.mjs` | tracker | Merge `batch/tracker-additions/` TSVs into `data/applications.md` |
+| `analyze-triage.mjs` | analysis | Post-run analysis of triage score distributions and bucket shifts |
 
 ## Tech Stack
 
@@ -220,11 +331,13 @@ career-ops/
 ![Go](https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white)
 ![Bubble Tea](https://img.shields.io/badge/Bubble_Tea-FF75B5?style=flat&logo=go&logoColor=white)
 
-- **Agent**: Claude Code with custom skills and modes
-- **PDF**: Playwright/Puppeteer + HTML template
-- **Scanner**: Playwright + Greenhouse API + WebSearch
+- **Agent**: Claude Code (Opus 4.6 / Sonnet 4.6 / Haiku 4.5) with custom skills and modes
+- **Models**: Haiku 4.5 for triage, Sonnet 4.6 + thinking for eval + PDF tailoring; Opus reserved for high-stakes re-scoring
+- **PDF**: `render-cv.mjs` deterministic renderer + Playwright/Puppeteer + HTML template
+- **Scanner**: `run-pipeline.mjs` orchestrator + Greenhouse/Ashby/Lever APIs + Playwright body extraction
+- **Prefilter**: `lib/location-match.mjs` shared library (tiered evidence + foreign-pattern matching)
 - **Dashboard**: Go + Bubble Tea + Lipgloss (Catppuccin Mocha theme)
-- **Data**: Markdown tables + YAML config + TSV batch files
+- **Data**: Markdown tables + YAML config + TSV batch files + JSON manifests
 
 ## Also Open Source
 
