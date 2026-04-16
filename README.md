@@ -43,6 +43,37 @@
 <p align="center"><a href="https://discord.gg/8pRpHETxa4"><img src="https://img.shields.io/badge/Join_the_community-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a></p>
 
 > **This repo is a fork of [santifer/career-ops](https://github.com/santifer/career-ops).** The original system by [Santiago](https://santifer.io) is a fully-working end-to-end job search agent that he used to evaluate 740+ offers and land his Head of Applied AI role. This fork introduces a staged, cost-optimized discovery pipeline (scan → Haiku triage → Sonnet customize), a deterministic local CV renderer, a shared location-matching library, and a slimmer `_shared` / `_eval` mode split. Both systems produce tailored CVs end-to-end; this fork optimizes for running at higher volume at lower cost per offer.
+>
+> **Canonical URLs** — this fork: [`github.com/traviswye/opt-career-ops`](https://github.com/traviswye/opt-career-ops) · upstream: [`github.com/santifer/career-ops`](https://github.com/santifer/career-ops).
+
+## Why this fork exists — token economics
+
+This fork's reason for being is cost. The upstream system is excellent but the moment you try to run it at portfolio-scale (hundreds of JDs per week) the Opus batch cost becomes the limiting factor. Every change here traces back to one question: *how many tokens does this send, and how many can we drop without losing quality?*
+
+### Headline numbers
+
+| Metric | santifer upstream | opt-career-ops |
+|---|---:|---:|
+| Cost per tailored CV (end-to-end) | ~$0.60 | ~$0.05 |
+| ATS quality (JobScan, held-out JD) | 50% | 62% |
+| Wall-clock for a 2,400-job scan extract | ~95 min | ~25 min |
+| Output tokens per CV on HTML generation | ~3,000 | 0 |
+
+### Where the savings come from
+
+1. **Model ladder instead of Opus monoliths.** Triage runs on Haiku 4.5 (12-job chunks, ~$0.001/job). Evaluation runs on Sonnet 4.6 + thinking only for jobs that survived triage. PDF tailoring runs on Sonnet 4.6, gated by a score threshold — sub-threshold jobs get a report but no PDF.
+2. **Deterministic local renderer.** Upstream, the LLM writes the HTML for the PDF — 3,000+ output tokens per CV of deterministic boilerplate. Here `modes/pdf.md` emits a JSON object and `render-cv.mjs` fills `templates/cv-template.html` locally. Lint (coverage / cliché / page budget) runs without a round-trip.
+3. **Prompt context split (`_shared.md` / `_eval.md`).** Upstream `_shared.md` carries ~500 lines including scoring, archetype detection, and posting-legitimacy rules. Every mode loads it. Here the eval-only content moved to `_eval.md`. Non-eval modes (`pdf`, `contacto`, `apply`, `scan`, `triage`, `customize`) load ~40% less context per invocation with zero behavior change.
+4. **Zero-token prefilter before triage.** `lib/location-match.mjs` + `prefilter-jobs.mjs` apply tiered location evidence matching (metadata → header zone → phrase) to drop foreign, onsite-outside-allowed, seniority-wrong, and non-target-title jobs before triage ever sees them. Typical funnel: 3,200 scanned → ~800 kept. Everything else rejected for $0.
+5. **Skip-threshold + one retry instead of regenerate.** `full-customize.mjs --pdf-threshold 4.0` means low-fit jobs don't pay for a PDF. When lint fails (coverage < 80%, cliché found, page overflow), the renderer hands the specific lint output back to the LLM for one targeted fix — not a full regen from scratch.
+6. **Structured sidecar handoff.** Phase 1 (eval) writes 15–20 JD keywords to `reports/{NNN}-{slug}-keywords.json`. Phase 2 (PDF) reads the sidecar instead of re-extracting from the JD body — one list, written once, consumed by both the lint and the tailoring prompt.
+7. **Parallelized extraction.** `extract-jd.mjs --parallel N` (default 4) runs Playwright + ATS-API body extraction concurrently. Cuts a 2,400-job extract from ~95 min sequential to ~25 min. No token savings, but it makes the "run overnight, triage over morning coffee" pattern actually viable.
+
+### Not a replacement — a different tradeoff
+
+Upstream is tuned for candidates who hand-pick each offer and use the tool as a workflow assistant. This fork is tuned for volume: scan thousands of listings, funnel through progressively more expensive stages, tailor CVs only for the top ~5% that survive the gates. If you're running fewer than ~30 applications total, upstream is simpler and the cost savings don't matter. If you're scanning dozens of portals and evaluating hundreds of offers a month, the math on this fork compounds.
+
+For the full per-stage walkthrough, see [`docs/STAGED_PIPELINE.md`](docs/STAGED_PIPELINE.md).
 
 ## What Is This
 
@@ -85,8 +116,8 @@ Built by someone who used it to evaluate 740+ job offers, generate 100+ tailored
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/traviswye/career-ops.git   # or santifer/career-ops for upstream
-cd career-ops && npm install
+git clone https://github.com/traviswye/opt-career-ops.git   # or santifer/career-ops for upstream
+cd opt-career-ops && npm install
 npx playwright install chromium   # required for Playwright extraction + PDF rendering
 
 # 2. Check setup
@@ -353,11 +384,13 @@ My portfolio and other open source projects → [santifer.io](https://santifer.i
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=santifer%2Fcareer-ops&type=timeline&legend=top-left">
+Both repos plotted so you can see the lineage:
+
+<a href="https://www.star-history.com/#santifer/career-ops&traviswye/opt-career-ops&Timeline">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=santifer/career-ops&type=timeline&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=santifer/career-ops&type=timeline&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=santifer/career-ops&type=timeline&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=santifer/career-ops,traviswye/opt-career-ops&type=Timeline&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=santifer/career-ops,traviswye/opt-career-ops&type=Timeline" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=santifer/career-ops,traviswye/opt-career-ops&type=Timeline" />
  </picture>
 </a>
 
@@ -374,11 +407,19 @@ See [LEGAL_DISCLAIMER.md](LEGAL_DISCLAIMER.md) for full details. This software i
 
 ## Contributors
 
+Upstream contributors (santifer/career-ops — this fork stands on their work):
+
 <a href="https://github.com/santifer/career-ops/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=santifer/career-ops" />
 </a>
 
-Got hired using career-ops? [Share your story!](https://github.com/santifer/career-ops/issues/new?template=i-got-hired.yml)
+Fork contributors (traviswye/opt-career-ops):
+
+<a href="https://github.com/traviswye/opt-career-ops/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=traviswye/opt-career-ops" />
+</a>
+
+Got hired using opt-career-ops or career-ops? [Share your story upstream](https://github.com/santifer/career-ops/issues/new?template=i-got-hired.yml) — santifer maintains the original "I got hired" template and credit belongs with the original system.
 
 ## License
 
