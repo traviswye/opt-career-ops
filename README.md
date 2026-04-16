@@ -1,6 +1,12 @@
-# Career-Ops
+# opt-career-ops
 
 [English](README.md) | [Español](README.es.md) | [Português (Brasil)](README.pt-BR.md) | [한국어](README.ko-KR.md) | [日本語](README.ja.md) | [Русский](README.ru.md) | [繁體中文](README.zh-TW.md)
+
+> **This repo is a fork of [santifer/career-ops](https://github.com/santifer/career-ops).** The original system by [Santiago](https://santifer.io) is a fully-working end-to-end job search agent that he used to evaluate 740+ offers and land his Head of Applied AI role. This fork introduces a staged, cost-optimized discovery pipeline (scan → Haiku triage → Sonnet customize), a deterministic local CV renderer, a shared location-matching library, and a slimmer `_shared` / `_eval` mode split. Both systems produce tailored CVs end-to-end; this fork optimizes for running at higher volume at lower cost per offer.
+>
+> **Attribution notes.** The Discord invite, upstream author contact links, banner image, and demo GIF below all point at the original project by santifer — credit belongs with the original work. This README inherits santifer's formatting and structure; it's been rewritten only where the fork's behavior diverges from upstream. For the full list of what this fork adds or changes, see [CHANGELOG.md](CHANGELOG.md).
+>
+> **Canonical URLs** — this fork: [`github.com/traviswye/opt-career-ops`](https://github.com/traviswye/opt-career-ops) · upstream: [`github.com/santifer/career-ops`](https://github.com/santifer/career-ops).
 
 <p align="center">
   <a href="https://x.com/santifer"><img src="docs/hero-banner.jpg" alt="Career-Ops — Multi-Agent Job Search System" width="800"></a>
@@ -40,11 +46,7 @@
 
 <p align="center"><strong>740+ job listings evaluated · 100+ personalized CVs · 1 dream role landed</strong></p>
 
-<p align="center"><a href="https://discord.gg/8pRpHETxa4"><img src="https://img.shields.io/badge/Join_the_community-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a></p>
-
-> **This repo is a fork of [santifer/career-ops](https://github.com/santifer/career-ops).** The original system by [Santiago](https://santifer.io) is a fully-working end-to-end job search agent that he used to evaluate 740+ offers and land his Head of Applied AI role. This fork introduces a staged, cost-optimized discovery pipeline (scan → Haiku triage → Sonnet customize), a deterministic local CV renderer, a shared location-matching library, and a slimmer `_shared` / `_eval` mode split. Both systems produce tailored CVs end-to-end; this fork optimizes for running at higher volume at lower cost per offer.
->
-> **Canonical URLs** — this fork: [`github.com/traviswye/opt-career-ops`](https://github.com/traviswye/opt-career-ops) · upstream: [`github.com/santifer/career-ops`](https://github.com/santifer/career-ops).
+<p align="center"><a href="https://discord.gg/8pRpHETxa4"><img src="https://img.shields.io/badge/Join_the_community-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord (upstream)"></a></p>
 
 ## Why this fork exists — token economics
 
@@ -371,21 +373,12 @@ career-ops/
 - **Dashboard**: Go + Bubble Tea + Lipgloss (Catppuccin Mocha theme)
 - **Data**: Markdown tables + YAML config + TSV batch files + JSON manifests
 
-## Also Open Source
-
-- **[cv-santiago](https://github.com/santifer/cv-santiago)** -- The portfolio website (santifer.io) with AI chatbot, LLMOps dashboard, and case studies. If you need a portfolio to showcase alongside your job search, fork it and make it yours.
-
-## About the Author
-
-I'm Santiago -- Head of Applied AI, former founder (built and sold a business that still runs with my name on it). I built career-ops to manage my own job search. It worked: I used it to land my current role.
-
-My portfolio and other open source projects → [santifer.io](https://santifer.io)
-
-☕ [Buy me a coffee](https://buymeacoffee.com/santifer) if career-ops helped your job search.
-
+<!--
 ## Star History
 
-Both repos plotted so you can see the lineage:
+Commented out until this fork has enough stars for the chart to read usefully.
+The upstream chart lives on santifer/career-ops. To re-enable here, uncomment
+the block below:
 
 <a href="https://www.star-history.com/#santifer/career-ops&traviswye/opt-career-ops&Timeline">
  <picture>
@@ -394,6 +387,7 @@ Both repos plotted so you can see the lineage:
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=santifer/career-ops,traviswye/opt-career-ops&type=Timeline" />
  </picture>
 </a>
+-->
 
 ## Disclaimer
 
@@ -426,11 +420,12 @@ Got hired using opt-career-ops or career-ops? [Share your story upstream](https:
 
 MIT
 
-## Let's Connect
+## Upstream Author Links
+
+The original author of career-ops is Santiago ([santifer/career-ops](https://github.com/santifer/career-ops)). For questions about the upstream project, community Discord, or the case study behind the 740+ offers / Head of Applied AI story, his contact points are below:
 
 [![Website](https://img.shields.io/badge/santifer.io-000?style=for-the-badge&logo=safari&logoColor=white)](https://santifer.io)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/santifer)
 [![X](https://img.shields.io/badge/X-000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/santifer)
 [![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/8pRpHETxa4)
 [![Email](https://img.shields.io/badge/Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:hi@santifer.io)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_a_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/santifer)
