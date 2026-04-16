@@ -5,7 +5,7 @@
  * Checks all prerequisites and prints a pass/fail checklist.
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -136,6 +136,49 @@ function checkPortals() {
   };
 }
 
+function ensureFromTemplate(targetRelative, templateRelative, label) {
+  const target = join(projectRoot, targetRelative);
+  if (existsSync(target)) {
+    return { pass: true, label: `${label} (${targetRelative})` };
+  }
+  const template = join(projectRoot, templateRelative);
+  if (!existsSync(template)) {
+    return {
+      pass: false,
+      label: `${label} — template missing (${templateRelative})`,
+      fix: 'Reinstall or pull the template from upstream',
+    };
+  }
+  try {
+    const content = readFileSync(template, 'utf-8');
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, content);
+    return { pass: true, label: `${label} — auto-copied from ${templateRelative}` };
+  } catch (err) {
+    return {
+      pass: false,
+      label: `${label} — failed to auto-copy from template`,
+      fix: `cp ${templateRelative} ${targetRelative}`,
+    };
+  }
+}
+
+function checkProfileMode() {
+  return ensureFromTemplate(
+    join('modes', '_profile.md'),
+    join('modes', '_profile.template.md'),
+    'User customizations file ready',
+  );
+}
+
+function checkStoryBank() {
+  return ensureFromTemplate(
+    join('interview-prep', 'story-bank.md'),
+    join('interview-prep', 'story-bank.template.md'),
+    'Interview story bank ready',
+  );
+}
+
 function checkFonts() {
   const fontsDir = join(projectRoot, 'fonts');
   if (!existsSync(fontsDir)) {
@@ -193,14 +236,19 @@ async function main() {
     checkProfile(),
     await checkPrefilterConfig(),
     checkPortals(),
+    checkProfileMode(),
+    checkStoryBank(),
     checkFonts(),
     checkAutoDir('data'),
     checkAutoDir(join('data', 'prefilter')),
     checkAutoDir(join('data', 'triage')),
     checkAutoDir('jds'),
+    checkAutoDir(join('jds', 'normalized')),
     checkAutoDir('output'),
     checkAutoDir('reports'),
+    checkAutoDir('interview-prep'),
     checkAutoDir(join('batch', 'logs')),
+    checkAutoDir(join('batch', 'tracker-additions')),
   ];
 
   let failures = 0;
@@ -225,13 +273,16 @@ async function main() {
   } else {
     console.log('Result: All checks passed. You\'re ready to go! Run `claude` to start.');
     console.log('');
-    console.log('Suggested staged flow:');
-    console.log(`  ${dim('npm run scan -- --dry-run --summary-only')}`);
-    console.log(`  ${dim('npm run prefilter-policy && npm run scan-filter -- --from data/pipeline.md')}`);
-    console.log(`  ${dim('npm run extract -- --from data/scan-filter/kept.md')}`);
-    console.log(`  ${dim('npm run prefilter -- --jobs jds/normalized')}`);
-    console.log(`  ${dim('npm run candidate-pack && npm run triage -- --jobs data/prefilter/kept.json')}`);
+    console.log('Single-JD path — paste a URL or JD into Claude Code:');
+    console.log(`  ${dim('/career-ops {paste a JD}')}`);
     console.log('');
+    console.log('Discovery-at-scale path (scan → triage → shortlist → customize):');
+    console.log(`  ${dim('npm run pipeline                                        # full zero-token scan')}`);
+    console.log(`  ${dim('npm run triage -- --jobs data/prefilter/kept.json       # Haiku lite-score')}`);
+    console.log(`  ${dim('npm run shortlist -- --from data/triage/results.json --top 10')}`);
+    console.log(`  ${dim('npm run full-customize -- --from data/triage/shortlist.json --top 10 --approve')}`);
+    console.log('');
+    console.log('See docs/STAGED_PIPELINE.md for per-stage flags, cost estimates, and retry semantics.');
     console.log('Join the community: https://discord.gg/8pRpHETxa4');
     process.exit(0);
   }

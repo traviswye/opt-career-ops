@@ -81,6 +81,36 @@ narrative:
     - "End-to-end ML pipelines"
     - "Fast prototyping (idea to prod in 2 weeks)"
     - "Cross-functional communication"
+
+  # must_have — things the JD MUST mention for you to consider it worth
+  # triaging. Used by candidate-pack.mjs and the triage prompt's fast-path
+  # checks (before any scoring). Think of these as the "would you even open
+  # the tab if this word wasn't there?" list.
+  #
+  # Format: one item per line. You can use "OR" to list equivalents that
+  # satisfy the same requirement (e.g. "TypeScript OR JavaScript").
+  must_have:
+    - "Python"
+    - "ML OR LLM OR AI"
+    - "Senior OR Staff OR Lead level"
+
+  # nice_to_have — not required, but raises triage score when present.
+  nice_to_have:
+    - "PyTorch OR TensorFlow"
+    - "Production LLM experience"
+    - "Cloud infrastructure (AWS / GCP / Azure)"
+    - "CI/CD pipeline ownership"
+    - "Observability / metrics-driven design"
+
+  # deal_breakers — if the JD requires ANY of these, triage auto-rejects.
+  # Reserve this list for real stack/domain mismatches you cannot bridge,
+  # not mere preferences. Common entries: languages you don't ship in,
+  # domains that need regulated/cleared access, modalities you can't meet.
+  deal_breakers:
+    - "Active security clearance required"
+    - "C++ required as primary language"
+    - "Must be fluent in Mandarin"
+
   # Proof points — projects, articles, case studies with measurable impact
   proof_points:
     - name: "Project Alpha"
@@ -134,6 +164,15 @@ prefilter:
     allow_remote: true
     allow_hybrid: true
     allow_onsite: false
+    # allow_unknown_location — if true, JDs that don't explicitly name a
+    # work model (remote / hybrid / onsite) pass the modality gate. Many
+    # JDs "dance around" hybrid — they name an office city without ever
+    # saying the word. Setting this to `false` is stricter: the JD body
+    # must contain remote/hybrid/onsite/work-from-home/typeremote or it
+    # gets rejected. Expect ~40-50% of an untuned scan set to drop when
+    # you flip this off, but the kept set will be much more reliably
+    # remote-eligible. Start with `true`, then flip to `false` once your
+    # target portals are dialed in.
     allow_unknown_location: true
     willing_to_relocate: false
     # allowed_cities:
