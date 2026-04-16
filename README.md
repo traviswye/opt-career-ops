@@ -63,7 +63,7 @@ This fork's reason for being is cost. The upstream system is excellent but the m
 
 ### Where the savings come from
 
-1. **Model ladder instead of Opus monoliths.** Triage runs on Haiku 4.5 (12-job chunks, ~$0.001/job). Evaluation runs on Sonnet 4.6 + thinking only for jobs that survived triage. PDF tailoring runs on Sonnet 4.6, gated by a score threshold — sub-threshold jobs get a report but no PDF.
+1. **Staged model ladder instead of single-model monoliths.** Upstream runs one big prompt per job against whatever Claude model the user's Claude Code is configured with — that works, but every JD pays the full prompt cost at that model's rate regardless of how much reasoning the specific stage actually needs. Here the workload is split: **Haiku 4.5** for triage (12-job chunks, ~$0.001/job), **Sonnet 4.6 + thinking** for evaluation on jobs that survived triage, **Sonnet 4.6** for PDF tailoring gated by a score threshold. Each stage uses the cheapest model that still produces the quality that stage needs.
 2. **Deterministic local renderer.** Upstream, the LLM writes the HTML for the PDF — 3,000+ output tokens per CV of deterministic boilerplate. Here `modes/pdf.md` emits a JSON object and `render-cv.mjs` fills `templates/cv-template.html` locally. Lint (coverage / cliché / page budget) runs without a round-trip.
 3. **Prompt context split (`_shared.md` / `_eval.md`).** Upstream `_shared.md` carries ~500 lines including scoring, archetype detection, and posting-legitimacy rules. Every mode loads it. Here the eval-only content moved to `_eval.md`. Non-eval modes (`pdf`, `contacto`, `apply`, `scan`, `triage`, `customize`) load ~40% less context per invocation with zero behavior change.
 4. **Zero-token prefilter before triage.** `lib/location-match.mjs` + `prefilter-jobs.mjs` apply tiered location evidence matching (metadata → header zone → phrase) to drop foreign, onsite-outside-allowed, seniority-wrong, and non-target-title jobs before triage ever sees them. Typical funnel: 3,200 scanned → ~800 kept. Everything else rejected for $0.
@@ -261,11 +261,19 @@ You paste a job URL or JD
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Cost envelope (for a 2,400-offer daily run):**
-- Scan + filter + extract + prefilter + candidate-pack: $0 (all local / deterministic).
-- Triage: ~$2 (Haiku 4.5 at chunk size 12, ~700 kept jobs).
-- Customize (Sonnet Phase 1 on ~30 shortlisted + Phase 2 on ~15 above threshold): ~$3–$5.
-- **Total: under $10/day** to go from 2,400 raw listings to a dozen ATS-ready tailored CVs.
+### Cost envelope — 2,400-listing daily run
+
+| Stage | opt-career-ops | santifer/career-ops equivalent |
+|---|---:|---:|
+| Scan + filter + extract + prefilter + candidate-pack | **$0** (local, deterministic) | No equivalent — upstream has no scan/prefilter pipeline; users manually queue URLs into `data/pipeline.md`. |
+| Triage (~700 jobs survive prefilter; chunk size 12) | **~$2** (Haiku 4.5) | No triage stage — users curate from raw listings by hand. |
+| Customize Phase 1 (Sonnet + thinking eval on ~30 shortlisted) | **~$1.50** | ~$15–20 for the same 30 — upstream's monolithic batch runs the full A–G prompt at whatever model is configured; if it's Sonnet 4.6 that's ~$0.50–0.60/job, if it's Opus that's roughly 5× that. |
+| Customize Phase 2 (Sonnet PDF on ~15 clearing the 4.0 threshold) | **~$0.75** | No separate PDF gate — the upstream batch writes the PDF for every job it evaluates regardless of score, including the ones you wouldn't apply to. |
+| **Daily total** | **~$4–6** | **~$15–20 for the 30 tailored CVs** — and that's only if you've already done the manual work of picking which 30 URLs to queue. |
+
+**Two caveats worth naming:**
+- Upstream isn't designed to run a 2,400-listing firehose through its pipeline; it's designed for hand-curated batches of ~10–30 URLs. The cost comparison above is apples-to-oranges at the top of the funnel because this fork replaces what upstream users handle manually (browsing Greenhouse/Ashby/Lever for a weekend to find the ~30 worth applying to) with ~$2 of automated Haiku triage.
+- The apples-to-apples number — **per-tailored-CV cost at the generation step**, the one stage both systems have — is in the Headline Numbers table above: **~$0.05/CV here vs ~$0.60/CV upstream**. The ~12× reduction holds regardless of which end of the funnel you enter at.
 
 ## Pre-configured Portals
 
