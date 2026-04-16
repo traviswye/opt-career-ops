@@ -50,7 +50,7 @@
 
 ## Why this fork exists — token economics
 
-This fork's reason for being is cost. The upstream system is excellent but the moment you try to run it at portfolio-scale (hundreds of JDs per week) the Opus batch cost becomes the limiting factor. Every change here traces back to one question: *how many tokens does this send, and how many can we drop without losing quality?*
+This fork's reason for being is cost. The upstream system is excellent but the moment you try to run it at portfolio-scale (hundreds of JDs per week), the monolithic batch prompt becomes the limiting factor — every JD pays the full heavy-prompt cost at whatever model you've configured, whether that stage actually needed that much reasoning or not. Every change here traces back to one question: *how many tokens does this send, and how many can we drop without losing quality?*
 
 ### Headline numbers
 

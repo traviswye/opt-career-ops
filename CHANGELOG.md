@@ -18,7 +18,7 @@ Major refactor introducing a staged, cost-optimized scan → triage → customiz
 
 ### Architecture / cost
 
-- End-to-end cost per tailored CV: ~$0.60/run (Opus monolith) → ~$0.05/run (Haiku + Sonnet staged).
+- End-to-end cost per tailored CV: ~$0.60/run on upstream's single-model monolithic prompt (measured on Opus 4.6; would be lower on Sonnet but still single-model-for-every-stage) → ~$0.05/run on this fork's Haiku + Sonnet staged pipeline.
 - ATS quality on a held-out JD (JobScan): 50% → 62%.
 - Full daily loop (2,400 raw listings → dozen tailored CVs): under $10/day.
 
