@@ -17,7 +17,13 @@ All scripts live in the project root as `.mjs` modules and are exposed via `npm 
 | `npm run update` | `update-system.mjs apply` | Apply upstream update |
 | `npm run rollback` | `update-system.mjs rollback` | Rollback last update |
 | `npm run liveness` | `check-liveness.mjs` | Test if job URLs are still active |
-| `npm run scan` | `scan.mjs` | Zero-token portal scanner |
+| `npm run scan` | `scan-local.mjs` | Zero-token portal scanner |
+| `npm run scan-filter` | `scan-filter.mjs` | Filter scan metadata before extraction |
+| `npm run extract` | `extract-jd.mjs` | Normalize JDs to reusable local artifacts |
+| `npm run prefilter-policy` | `build-prefilter-policy.mjs` | Build deterministic pre-triage filter policy |
+| `npm run prefilter` | `prefilter-jobs.mjs` | Filter normalized JDs before triage |
+| `npm run candidate-pack` | `candidate-pack.mjs` | Build reusable candidate context |
+| `npm run triage` | `triage-lite.mjs` | Low-cost semantic scoring for promotion |
 
 ---
 
@@ -187,3 +193,112 @@ npm run scan
 ```
 
 **Exit codes:** `0` scan completed, `1` configuration error or no portals.yml found.
+
+---
+
+## scan-filter
+
+Applies deterministic metadata-only rules to scan output before extraction. This is the cheapest place to remove obvious junk such as non-target title families, junior roles, and location blockers when scan metadata has location available.
+
+It also applies a per-company balance cap so one employer cannot dominate the extract queue. The generated policy defaults to the top `5` scan matches per company, and you can override it per run.
+
+Writes:
+
+- `data/scan-filter/kept.md`
+- `data/scan-filter/rejected.json`
+- `data/scan-filter/summary.json`
+
+```bash
+npm run scan-filter -- --from data/pipeline.md --policy data/prefilter-policy.json
+npm run scan-filter -- --from data/pipeline.md --policy data/prefilter-policy.json --max-per-company 3
+npm run extract -- --from data/scan-filter/kept.md
+```
+
+**Exit codes:** `0` filter completed, `1` missing input/policy or malformed inputs.
+
+---
+
+## extract
+
+Normalizes job descriptions into reusable local artifacts under `jds/normalized/*.json` plus markdown copies in `jds/*.md`.
+
+```bash
+npm run extract -- --from data/scan-filter/kept.md
+```
+
+**Exit codes:** `0` extraction completed, `1` input error or extraction failure.
+
+---
+
+## prefilter-policy
+
+Builds `data/prefilter-policy.json` from `config/profile.yml`. This policy is deterministic and meant to catch obvious blockers before triage tokens are spent.
+
+```bash
+npm run prefilter-policy
+```
+
+Typical rules include:
+
+- allowed countries
+- allowed states for local onsite / hybrid screening
+- remote / hybrid / onsite preferences
+- seniority excludes
+- target role-family keywords
+- hard title excludes
+
+**Exit codes:** `0` policy generated, `1` missing profile or parse error.
+
+---
+
+## prefilter
+
+Applies the generated prefilter policy to normalized JD artifacts and writes:
+
+- `data/prefilter/kept.json`
+- `data/prefilter/rejected.json`
+- `data/prefilter/summary.tsv`
+
+`data/prefilter/kept.json` is the intended input for `npm run triage`.
+
+```bash
+npm run prefilter -- --jobs jds/normalized/index.json --policy data/prefilter-policy.json
+npm run triage -- --jobs data/prefilter/kept.json --pack data/candidate-pack.json
+```
+
+**Exit codes:** `0` filter completed, `1` missing jobs/policy or malformed inputs.
+
+---
+
+## candidate-pack
+
+Builds `data/candidate-pack.json` from `config/profile.yml`, `cv.md`, `modes/_profile.md`, and `article-digest.md` for reuse across all triage jobs.
+
+```bash
+npm run candidate-pack
+```
+
+**Exit codes:** `0` pack generated, `1` missing profile or parse error.
+
+---
+
+## triage
+
+Runs the low-cost semantic lite scorer against normalized JDs, typically from `data/prefilter/kept.json`.
+
+The output is intentionally compact and bucket-first:
+
+- `strong_include`
+- `include`
+- `borderline`
+- `exclude`
+
+Compatibility classifications (`apply`, `maybe`, `reject`) are still emitted so the existing shortlist and promotion commands continue to work.
+
+```bash
+npm run triage -- --jobs data/prefilter/kept.json --pack data/candidate-pack.json
+npm run triage -- --jobs data/prefilter/kept.json --pack data/candidate-pack.json --parallel 4
+npm run triage -- --jobs data/prefilter/kept.json --pack data/candidate-pack.json --parallel 4 --chunk-size 10
+```
+
+**Exit codes:** `0` triage completed, `1` worker or input failure.

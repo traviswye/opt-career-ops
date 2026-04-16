@@ -17,10 +17,12 @@ There are two layers. Read `DATA_CONTRACT.md` for the full list.
 - `data/*`, `reports/*`, `output/*`, `interview-prep/*`
 
 **System Layer (auto-updatable, DON'T put user data here):**
-- `modes/_shared.md`, `modes/oferta.md`, all other modes
+- `modes/_shared.md`, `modes/_eval.md`, `modes/oferta.md`, all other modes
 - `CLAUDE.md`, `*.mjs` scripts, `dashboard/*`, `templates/*`, `batch/*`
 
-**THE RULE: When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `config/profile.yml`. NEVER edit `modes/_shared.md` for user-specific content.** This ensures system updates don't overwrite their customizations.
+**THE RULE: When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `config/profile.yml`. NEVER edit `modes/_shared.md` or `modes/_eval.md` for user-specific content.** This ensures system updates don't overwrite their customizations.
+
+**Note on `_shared.md` vs `_eval.md`:** As of the prompt-bloat cleanup, the old monolithic `_shared.md` has been split. `_shared.md` now holds universal rules (sources of truth, global NEVER/ALWAYS, tools, professional writing). `_eval.md` holds evaluation-only content (scoring system, archetype detection, Block G posting legitimacy). Non-evaluation modes (`pdf`, `contacto`, `apply`, `scan`) load only `_shared.md`; evaluation modes (`oferta`, `ofertas`, `auto-pipeline` Phase 1) load both.
 
 ## Update Check
 
@@ -184,7 +186,7 @@ This system is designed to be customized by YOU (AI Agent). When the user asks y
 - "Add these companies to my portals" → edit `portals.yml`
 - "Update my profile" → edit `config/profile.yml`
 - "Change the CV template design" → edit `templates/cv-template.html`
-- "Adjust the scoring weights" → edit `modes/_profile.md` for user-specific weighting, or edit `modes/_shared.md` and `batch/batch-prompt.md` only when changing the shared system defaults for everyone
+- "Adjust the scoring weights" → edit `modes/_profile.md` for user-specific weighting, or edit `modes/_eval.md` and `batch/batch-prompt.md` only when changing the shared system defaults for everyone
 
 ### Language Modes
 

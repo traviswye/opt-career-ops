@@ -16,7 +16,13 @@ These files contain your personal data, customizations, and work product. Update
 | `portals.yml` | Your customized company list |
 | `data/applications.md` | Your application tracker |
 | `data/pipeline.md` | Your URL inbox |
+| `data/scan-results.json` | Your enriched scan metadata manifest |
 | `data/scan-history.tsv` | Your scan history |
+| `data/scan-filter/*` | Your pre-extraction filtered scan manifests |
+| `data/candidate-pack.json` | Your generated reusable candidate context |
+| `data/prefilter-policy.json` | Your generated local prefilter policy |
+| `data/prefilter/*` | Your filtered keep/reject manifests |
+| `data/triage/*` | Your triage results, shortlist, and staging artifacts |
 | `data/follow-ups.md` | Your follow-up history |
 | `reports/*` | Your evaluation reports |
 | `output/*` | Your generated PDFs |
@@ -49,6 +55,7 @@ These files contain system logic, scripts, templates, and instructions that impr
 | `AGENTS.md` | Codex instructions |
 | `*.mjs` | Utility scripts |
 | `batch/batch-prompt.md` | Batch worker prompt |
+| `batch/triage-prompt.md` | Low-cost triage worker prompt |
 | `batch/batch-runner.sh` | Batch orchestrator |
 | `dashboard/*` | Go TUI dashboard |
 | `templates/*` | Base templates |

@@ -1,10 +1,10 @@
 # Portal Scanner Configuration
 # Used by /career-ops scan to discover new offers automatically.
 #
-# Strategy (3 levels):
-#   1. Playwright → careers_url of each company (real-time, reliable)
-#   2. Greenhouse API → structured JSON (fast, Greenhouse-only)
-#   3. WebSearch with site: filters (broad discovery, may be stale)
+# Strategy for the local staged pipeline:
+#   1. ATS API when available (fastest and cheapest)
+#   2. Local Playwright against careers_url (real-time, still cheap)
+#   3. WebSearch only as a legacy/manual fallback, not the default scan path
 #
 # IMPORTANT: Each company in tracked_companies MUST have careers_url.
 #
@@ -96,8 +96,9 @@ title_filter:
     - "Director"
 
 # -- Search queries --
-# Each query triggers a WebSearch. Use site: to filter by portal.
-# The scanner extracts title, URL, and company from results.
+# These queries are kept for legacy/manual workflows.
+# The local staged scanner prefers tracked_companies + careers_url and does
+# not use discovery-time WebSearch by default.
 
 search_queries:
   # -- Ashby --
@@ -294,7 +295,8 @@ search_queries:
 
 # -- Tracked companies --
 # Companies whose career pages are checked directly.
-# scan_method: playwright (default), websearch, greenhouse_api
+# scan_method is advisory for prompt-driven/manual workflows.
+# The local scanner still prefers API first, then local Playwright.
 # For Greenhouse companies, add api: field for faster structured JSON access.
 
 tracked_companies:

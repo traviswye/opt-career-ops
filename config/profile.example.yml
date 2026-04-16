@@ -33,6 +33,44 @@ target_roles:
       level: "Mid-Senior"
       fit: "adjacent"
 
+# role_aliases — OPTIONAL, user-gated, Summary-only
+#
+# ATS parsers search for the exact job title from the JD. If your cv.md title
+# differs from the common JD language (e.g. your title was "Software Engineer II"
+# but you did senior full-stack work, or your title was "Instructor" but you
+# credibly led curriculum design), you can declare equivalent titles here. The
+# pdf mode will use these in the Professional Summary ONLY when the JD's title
+# is in your approved list. Work Experience entries always stay factual and
+# match cv.md verbatim — this feature does not change your resume history, it
+# only lets the summary positioning statement use title language that matches
+# how the role is advertised.
+#
+# Only list titles that are legitimately equivalent to what you actually did. If
+# a recruiter asks about scope, you need to be able to defend it. Do not use
+# this feature to inflate seniority you haven't earned.
+#
+# Example — an engineer whose actual title was "Software Engineer II" but who
+# operated at senior scope and worked across the stack:
+#
+# role_aliases:
+#   "Software Engineer II":
+#     - "Senior Software Engineer"
+#     - "Senior Full-Stack Software Engineer"
+#     - "Senior Full Stack Engineer"
+#     - "Integrations Engineer"
+#     - "Solutions Engineer"
+#     - "Platform Engineer"
+#
+# Example — a teacher whose title was "Instructor" but whose scope covered
+# curriculum design and training:
+#
+# role_aliases:
+#   "Instructor":
+#     - "Curriculum Designer"
+#     - "Training Specialist"
+#     - "Learning Experience Designer"
+#     - "Instructional Designer"
+
 narrative:
   # Your professional headline (1 line)
   headline: "ML Engineer turned AI product builder"
@@ -69,3 +107,61 @@ location:
   visa_status: "No sponsorship needed"
   # For remote roles outside your country:
   # onsite_availability: "1 week/month in any city"
+
+resume:
+  # Hard cap on generated CV length. The pdf mode's prompt references this
+  # value as the budget, and render-cv.mjs lints the final PDF and warns
+  # (or fails) if the page count exceeds it. Default is 2 — most recruiters
+  # scan for 6 seconds on page 1 and never reach page 3.
+  max_pages: 2
+  # Set `fail_on_overflow: true` to exit render-cv.mjs with non-zero status
+  # when the PDF exceeds max_pages. Default is false (warn only), so the
+  # PDF is still usable and the orchestrator decides whether to iterate.
+  fail_on_overflow: false
+
+prefilter:
+  # Deterministic zero-token filtering before triage.
+  # This should catch obvious blockers like geography, onsite mismatch,
+  # junior roles, and non-target title families.
+  location:
+    allowed_countries:
+      - "United States"
+    # Optional: constrain onsite/hybrid roles to local states or regions.
+    # If omitted, the generated policy will try to infer the current state
+    # from candidate.location when willing_to_relocate is false.
+    # allowed_states:
+    #   - "Florida"
+    allow_remote: true
+    allow_hybrid: true
+    allow_onsite: false
+    allow_unknown_location: true
+    willing_to_relocate: false
+    # allowed_cities:
+    #   - "San Francisco"
+  seniority:
+    include:
+      - "Senior"
+      - "Staff"
+    exclude:
+      - "Intern"
+      - "Junior"
+      - "New Grad"
+    require_match: false
+  role_keywords:
+    # Include/exclude here if the derived archetype keywords need help.
+    include: []
+    exclude:
+      - "Account Executive"
+      - "Sales"
+      - "Marketing"
+      - "Recruiter"
+    require_match: true
+    minimum_matches: 1
+  hard_title_excludes:
+    - "Analyst"
+    - "Compliance"
+  company_excludes: []
+  blocked_text_keywords: []
+  company_balance:
+    enabled: true
+    max_per_company: 5

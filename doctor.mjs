@@ -5,7 +5,7 @@
  * Checks all prerequisites and prints a pass/fail checklist.
  */
 
-import { existsSync, mkdirSync, readdirSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -90,6 +90,38 @@ function checkProfile() {
   };
 }
 
+async function checkPrefilterConfig() {
+  const profilePath = join(projectRoot, 'config', 'profile.yml');
+
+  if (!existsSync(profilePath)) {
+    return {
+      pass: false,
+      label: 'Prefilter profile config unavailable',
+      fix: 'Create config/profile.yml first so prefilter-policy can be generated',
+    };
+  }
+
+  try {
+    const yamlModule = await import('js-yaml');
+    const loadYaml = yamlModule.load || yamlModule.default?.load;
+    const profile = loadYaml(readFileSync(profilePath, 'utf-8')) || {};
+
+    if (profile.prefilter && typeof profile.prefilter === 'object') {
+      return { pass: true, label: 'Prefilter config found in config/profile.yml' };
+    }
+
+    return {
+      pass: true,
+      label: 'Prefilter config will use derived defaults from config/profile.yml',
+    };
+  } catch {
+    return {
+      pass: true,
+      label: 'Prefilter config not validated (js-yaml unavailable until dependencies are installed)',
+    };
+  }
+}
+
 function checkPortals() {
   if (existsSync(join(projectRoot, 'portals.yml'))) {
     return { pass: true, label: 'portals.yml found' };
@@ -159,11 +191,16 @@ async function main() {
     await checkPlaywright(),
     checkCv(),
     checkProfile(),
+    await checkPrefilterConfig(),
     checkPortals(),
     checkFonts(),
     checkAutoDir('data'),
+    checkAutoDir(join('data', 'prefilter')),
+    checkAutoDir(join('data', 'triage')),
+    checkAutoDir('jds'),
     checkAutoDir('output'),
     checkAutoDir('reports'),
+    checkAutoDir(join('batch', 'logs')),
   ];
 
   let failures = 0;
@@ -187,6 +224,13 @@ async function main() {
     process.exit(1);
   } else {
     console.log('Result: All checks passed. You\'re ready to go! Run `claude` to start.');
+    console.log('');
+    console.log('Suggested staged flow:');
+    console.log(`  ${dim('npm run scan -- --dry-run --summary-only')}`);
+    console.log(`  ${dim('npm run prefilter-policy && npm run scan-filter -- --from data/pipeline.md')}`);
+    console.log(`  ${dim('npm run extract -- --from data/scan-filter/kept.md')}`);
+    console.log(`  ${dim('npm run prefilter -- --jobs jds/normalized')}`);
+    console.log(`  ${dim('npm run candidate-pack && npm run triage -- --jobs data/prefilter/kept.json')}`);
     console.log('');
     console.log('Join the community: https://discord.gg/8pRpHETxa4');
     process.exit(0);

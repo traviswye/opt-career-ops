@@ -69,12 +69,23 @@ Or paste a JD directly to run the full pipeline.
 
 ## Context Loading by Mode
 
-After determining the mode, load the necessary files before executing:
+After determining the mode, load the necessary files before executing. The split between `_shared.md` (universal) and `_eval.md` (evaluation-only — scoring, archetypes, Block G) is deliberate: non-eval modes should NOT load `_eval.md` because it's pure context bloat for them.
 
-### Modes that require `_shared.md` + their mode file:
+### Modes that require `_shared.md` + `_eval.md` + their mode file:
+Read `modes/_shared.md` + `modes/_eval.md` + `modes/{mode}.md`
+
+Applies to: `oferta`, `ofertas`, `auto-pipeline`
+
+These modes perform A–G evaluation, scoring, and/or multi-offer comparison, so they need the full eval ruleset.
+
+### Modes that require `_shared.md` + their mode file (NO `_eval.md`):
 Read `modes/_shared.md` + `modes/{mode}.md`
 
-Applies to: `auto-pipeline`, `oferta`, `ofertas`, `pdf`, `contacto`, `apply`, `pipeline`, `scan`, `batch`
+Applies to: `pdf`, `contacto`, `apply`, `pipeline`, `scan`, `batch`
+
+These modes don't evaluate — `pdf` generates a tailored CV, `contacto` drafts LinkedIn outreach, `apply` fills forms, `scan` crawls portals, `batch` uses its own self-contained `batch/batch-prompt.md`. None of them need the scoring system or Block G signals.
+
+**Note for `auto-pipeline`:** Phase 1 (Evaluate) requires `_eval.md`; Phase 2 (PDF) does not. When running the full auto-pipeline, load `_eval.md` once up front — Phase 2 can ignore it.
 
 ### Standalone modes (only their mode file):
 Read `modes/{mode}.md`
@@ -82,7 +93,7 @@ Read `modes/{mode}.md`
 Applies to: `tracker`, `deep`, `training`, `project`, `patterns`, `followup`
 
 ### Modes delegated to subagent:
-For `scan`, `apply` (with Playwright), and `pipeline` (3+ URLs): launch as Agent with the content of `_shared.md` + `modes/{mode}.md` injected into the subagent prompt.
+For `scan`, `apply` (with Playwright), and `pipeline` (3+ URLs): launch as Agent with the content of `_shared.md` + `modes/{mode}.md` (and `_eval.md` for `pipeline` if the inner mode is eval) injected into the subagent prompt.
 
 ```
 Agent(
