@@ -1,5 +1,7 @@
 # Modo: ofertas — Comparación Multi-Oferta
 
+**Required context:** Before executing, ensure you have loaded `modes/_shared.md` AND `modes/_eval.md`. This mode applies the scoring system and archetype-aware comparisons defined in `_eval.md`.
+
 Scoring matrix de 10 dimensiones ponderadas:
 
 | Dimensión | Peso | Criterios 1-5 |

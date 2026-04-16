@@ -1,10 +1,12 @@
 # Modo: oferta — Evaluación Completa A-G
 
+**Required context:** Before executing, ensure you have loaded `modes/_shared.md` AND `modes/_eval.md`. The eval-only content (scoring system, archetype detection, Block G signals) lives in `_eval.md`, not `_shared.md`.
+
 Cuando el candidato pega una oferta (texto o URL), entregar SIEMPRE los 7 bloques (A-F evaluation + G legitimacy):
 
 ## Paso 0 — Detección de Arquetipo
 
-Clasificar la oferta en uno de los 6 arquetipos (ver `_shared.md`). Si es híbrido, indicar los 2 más cercanos. Esto determina:
+Clasificar la oferta en uno de los 6 arquetipos (ver `modes/_eval.md`, with user overrides in `modes/_profile.md`). Si es híbrido, indicar los 2 más cercanos. Esto determina:
 - Qué proof points priorizar en bloque B
 - Cómo reescribir el summary en bloque E
 - Qué historias STAR preparar en bloque F
