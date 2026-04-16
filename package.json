@@ -14,7 +14,19 @@
     "update": "node update-system.mjs apply",
     "rollback": "node update-system.mjs rollback",
     "liveness": "node check-liveness.mjs",
-    "scan": "node scan.mjs"
+    "pipeline": "node run-pipeline.mjs",
+    "scan": "node scan-local.mjs",
+    "scan-filter": "node scan-filter.mjs",
+    "extract": "node extract-jd.mjs",
+    "prefilter-policy": "node build-prefilter-policy.mjs",
+    "prefilter": "node prefilter-jobs.mjs",
+    "candidate-pack": "node candidate-pack.mjs",
+    "triage": "node triage-lite.mjs",
+    "analyze-triage": "node analyze-triage.mjs",
+    "analyze-triage-concerns": "node analyze-triage-concerns.mjs",
+    "shortlist": "node shortlist.mjs",
+    "review-shortlist": "node review-shortlist.mjs",
+    "full-customize": "node full-customize.mjs"
   },
   "keywords": [
     "ai",
