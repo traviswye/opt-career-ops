@@ -58,6 +58,7 @@ This fork's reason for being is cost. The upstream system is excellent but the m
 |---|---:|---:|
 | Cost per tailored CV (end-to-end) | ~$0.60 | ~$0.05 |
 | ATS quality (JobScan, held-out JD) | 50% | 62% |
+| Keyword coverage per CV (lint-enforced) | ~75–85% (no lint gate) | ≥80% floor enforced, typical 85–100% |
 | Wall-clock for a 2,400-job scan extract | ~95 min | ~25 min |
 | Output tokens per CV on HTML generation | ~3,000 | 0 |
 
