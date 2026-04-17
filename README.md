@@ -266,14 +266,15 @@ You paste a job URL or JD
 
 | Stage | opt-career-ops | santifer/career-ops equivalent |
 |---|---:|---:|
-| Scan + filter + extract + prefilter + candidate-pack | **$0** (local, deterministic) | No equivalent — upstream has no scan/prefilter pipeline; users manually queue URLs into `data/pipeline.md`. |
-| Triage (~700 jobs survive prefilter; chunk size 12) | **~$2** (Haiku 4.5) | No triage stage — users curate from raw listings by hand. |
+| Scan + filter + extract + prefilter + candidate-pack | **$0** (local, deterministic) | **$0** — upstream also has a zero-cost scan (`scan.mjs` with Playwright + ATS APIs + WebSearch-driven discovery). Filtering is prompt-guided (company max-JDs, title keywords) rather than deterministic prefilter, but the discovery step itself is free in both systems. |
+| Triage (~700 jobs survive prefilter; chunk size 12) | **~$2** (Haiku 4.5) | No dedicated triage stage — upstream's filtering happens inside the scan prompts (company caps, title relevance) and through manual curation. Effective but not a separate token-spend boundary. |
 | Customize Phase 1 (Sonnet + thinking eval on ~30 shortlisted) | **~$1.50** | ~$15–20 for the same 30 — upstream's monolithic batch runs the full A–G prompt at whatever model is configured; if it's Sonnet 4.6 that's ~$0.50–0.60/job, if it's Opus that's roughly 5× that. |
-| Customize Phase 2 (Sonnet PDF on ~15 clearing the 4.0 threshold) | **~$0.75** | No separate PDF gate — the upstream batch writes the PDF for every job it evaluates regardless of score, including the ones you wouldn't apply to. |
-| **Daily total** | **~$4–6** | **~$15–20 for the 30 tailored CVs** — and that's only if you've already done the manual work of picking which 30 URLs to queue. |
+| Customize Phase 2 (Sonnet PDF on ~15 clearing the 4.0 threshold) | **~$0.75** | No separate PDF gate — the upstream batch writes the PDF for every job it evaluates regardless of score, including ones you wouldn't apply to. |
+| **Daily total** | **~$4–6** | **~$15–20 for 30 tailored CVs** |
 
-**Two caveats worth naming:**
-- Upstream isn't designed to run a 2,400-listing firehose through its pipeline; it's designed for hand-curated batches of ~10–30 URLs. The cost comparison above is apples-to-oranges at the top of the funnel because this fork replaces what upstream users handle manually (browsing Greenhouse/Ashby/Lever for a weekend to find the ~30 worth applying to) with ~$2 of automated Haiku triage.
+**Context on the comparison:**
+- Both systems have a zero-cost discovery step. The difference is that upstream's scan is Playwright + prompt-guided filtering (effective for smaller portal lists), while this fork adds a deterministic prefilter layer with tiered location-evidence matching that scales to thousands of listings without token spend.
+- Upstream's prompt-level filtering (company caps, title keywords in the scan mode) serves a similar purpose to this fork's `triage` stage — just without a dedicated Haiku pass. For a user scanning 10–30 companies, upstream's approach is simpler and works well. The dedicated triage stage pays off when the listing volume exceeds what prompt-guided curation can handle efficiently.
 - The apples-to-apples number — **per-tailored-CV cost at the generation step**, the one stage both systems have — is in the Headline Numbers table above: **~$0.05/CV here vs ~$0.60/CV upstream**. The ~12× reduction holds regardless of which end of the funnel you enter at.
 
 ## Pre-configured Portals
