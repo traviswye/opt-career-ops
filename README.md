@@ -270,7 +270,7 @@ You paste a job URL or JD
 | Triage (~700 jobs survive prefilter; chunk size 12) | **~$2** (Haiku 4.5) | No dedicated triage stage — upstream's filtering happens inside the scan prompts (company caps, title relevance) and through manual curation. Effective but not a separate token-spend boundary. |
 | Customize Phase 1 (Sonnet + thinking eval on ~30 shortlisted) | **~$1.50** | ~$15–20 for the same 30 — upstream's monolithic batch runs the full A–G prompt at whatever model is configured; if it's Sonnet 4.6 that's ~$0.50–0.60/job, if it's Opus that's roughly 5× that. |
 | Customize Phase 2 (Sonnet PDF on ~15 clearing the 4.0 threshold) | **~$0.75** | No separate PDF gate — the upstream batch writes the PDF for every job it evaluates regardless of score, including ones you wouldn't apply to. |
-| **Daily total** | **~$4–6** | **~$15–20 for 30 tailored CVs** |
+| **Daily total** | **~$4–6** | **~$15–20 on Sonnet, ~$75–100 on Opus** for the same 30 tailored CVs |
 
 **Context on the comparison:**
 - Both systems have a zero-cost discovery step. The difference is that upstream's scan is Playwright + prompt-guided filtering (effective for smaller portal lists), while this fork adds a deterministic prefilter layer with tiered location-evidence matching that scales to thousands of listings without token spend.
