@@ -264,18 +264,17 @@ You paste a job URL or JD
 
 ### Cost envelope — 2,400-listing daily run
 
-| Stage | opt-career-ops | santifer/career-ops equivalent |
-|---|---:|---:|
-| Scan + filter + extract + prefilter + candidate-pack | **$0** (local, deterministic) | **$0** — upstream also has a zero-cost scan (`scan.mjs` with Playwright + ATS APIs + WebSearch-driven discovery). Filtering is prompt-guided (company max-JDs, title keywords) rather than deterministic prefilter, but the discovery step itself is free in both systems. |
-| Triage (~700 jobs survive prefilter; chunk size 12) | **~$2** (Haiku 4.5) | No dedicated triage stage — upstream's filtering happens inside the scan prompts (company caps, title relevance) and through manual curation. Effective but not a separate token-spend boundary. |
-| Customize Phase 1 (Sonnet + thinking eval on ~30 shortlisted) | **~$1.50** | Upstream's monolithic batch runs eval + PDF in one prompt per job. Measured cost on Opus (the model upstream was designed around): **~$1.50+/job all-in** — includes session context growth, Playwright tool calls, WebSearch, and compaction overhead. Based on real usage: ~130 upstream CVs consumed $100+ in API overage alone. |
-| Customize Phase 2 (Sonnet PDF on ~15 clearing the 4.0 threshold) | **~$0.75** | No separate PDF gate — the upstream batch writes the PDF for every job it evaluates regardless of score, including ones you wouldn't apply to. Cost is bundled in the per-job figure above. |
-| **Daily total** | **~$4–6** for 2,400 scanned → ~15 tailored CVs (fully automated, Sonnet-optimized) | **~$50–70** for ~30 tailored CVs on Opus as designed (real measured). Note: upstream can run on Sonnet for less (~$5–8 for 30 CVs), but its prompts were designed and tested on Opus — quality on Sonnet is unvalidated. Either way, the 30 URLs must be hand-curated first; upstream has no automated funnel from 2,400 raw listings to a shortlist. |
+The fork's real value isn't just cheaper CVs — it's that the **triage stage replaces work that's either prohibitively expensive or manually intensive** on upstream.
 
-**Context on the comparison:**
-- Both systems have a zero-cost discovery step. The difference is that upstream's scan is Playwright + prompt-guided filtering (effective for smaller portal lists), while this fork adds a deterministic prefilter layer with tiered location-evidence matching that scales to thousands of listings without token spend.
-- Upstream's prompt-level filtering (company caps, title keywords in the scan mode) serves a similar purpose to this fork's `triage` stage — just without a dedicated Haiku pass. For a user scanning 10–30 companies, upstream's approach is simpler and works well. The dedicated triage stage pays off when the listing volume exceeds what prompt-guided curation can handle efficiently.
-- The apples-to-apples number — **per-tailored-CV cost at the generation step**, the one stage both systems have — is in the Headline Numbers table above: **~$0.05/CV here vs ~$0.60/CV upstream**. The ~12× reduction holds regardless of which end of the funnel you enter at.
+| Stage | opt-career-ops | What it would cost upstream to do the same work |
+|---|---:|---:|
+| Scan + filter + extract + prefilter | **$0** (local, deterministic) | **$0** — upstream also has a zero-cost scan (`scan.mjs` with Playwright + ATS APIs). Both systems discover listings for free. |
+| Triage 2,400 listings down to ~30 worth evaluating | **~$2** (Haiku 4.5, 12-job chunks) | Upstream has no triage stage. To achieve the same filtering, you'd either **(a)** manually browse and curate 2,400 listings by hand (free in dollars, hours of labor), or **(b)** run the monolithic eval prompt on all 2,400 at ~$0.60–1.50/job = **$1,440–$3,600**. This is why upstream users hand-curate: the alternative is unaffordable. |
+| Eval ~30 shortlisted jobs | **~$1.50** (Sonnet + thinking) | **~$18–45** for 30 jobs (monolithic batch at ~$0.60/job on Sonnet, ~$1.50/job on Opus — real measured) |
+| PDF for ~15 above threshold | **~$0.75** (Sonnet + deterministic renderer) | No threshold gate — upstream writes a PDF for every job it evaluates regardless of score. Cost is baked into the per-job figure above. |
+| **Daily total (2,400 listings → ~15 tailored CVs)** | **~$4–6** | **$1,460–$3,650** if upstream tried to process the full 2,400 — or **~$18–45 for just the 30 CVs** if you've already done the manual curation yourself |
+
+**The takeaway:** both systems can generate a tailored CV. The fork's advantage is the **funnel economics** — Haiku triage + deterministic prefilter replaces $1,400+ of upstream eval spend (or a weekend of manual browsing) with $2 of automated scoring. The per-CV generation cost is also cheaper (~$0.05 vs ~$0.60–1.50), but the funnel is where the math really diverges.
 
 ## Pre-configured Portals
 
